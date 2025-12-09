@@ -2,6 +2,7 @@ package uk.ac.ed.eci.libCZI.document;
 
 import static java.lang.foreign.ValueLayout.ADDRESS;
 import static java.lang.foreign.ValueLayout.JAVA_INT;
+import static java.lang.foreign.ValueLayout.JAVA_LONG;
 
 import java.lang.foreign.Arena;
 import java.lang.foreign.FunctionDescriptor;
@@ -62,7 +63,24 @@ public class DocumentInfo {
     
     //libCZI_CziDocumentInfoGetAvailableDimension
     public AvailableDimensions availableDimensions() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        // EXTERNALLIBCZIAPI_API(LibCZIApiErrorCode) libCZI_CziDocumentInfoGetAvailableDimension(CziDocumentInfoHandle czi_document_info, std::uint32_t available_dimensions_count, std::uint32_t* available_dimensions);
+        FunctionDescriptor descriptor = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS);
+        MethodHandle getAvailableDimension = LibCziFFM.getMethodHandle("libCZI_CziDocumentInfoGetAvailableDimension", descriptor);
+        try (Arena arena = Arena.ofConfined()) {
+            var availableDimensionsCount = 9; // todo how many
+            var availableDimensions = arena.allocate(JAVA_INT, availableDimensionsCount);
+            int errorCode = (int) getAvailableDimension.invokeExact(cziDocumentHandle, availableDimensionsCount, availableDimensions);
+            if (errorCode != 0) {
+                throw new RuntimeException("Failed to get available dimensions. Error code: " + errorCode);
+            }
+            int[] out = new int[availableDimensionsCount];
+            for (int i = 0; i < availableDimensionsCount; i++) {
+                out[i] = availableDimensions.get(JAVA_INT, i * JAVA_INT.byteSize());
+            }
+            return new AvailableDimensions(out);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to call native function libCZI_CziDocumentInfoGetAvailableDimension", e);
+        }
     }
 
     //libCZI_CziDocumentInfoGetDisplaySettings
@@ -71,6 +89,10 @@ public class DocumentInfo {
     }
     //libCZI_CziDocumentInfoGetDimensionInfo
     public DimensionInfo dimensionInfo() {
+        // this could be a list, combining
+        // EXTERNALLIBCZIAPI_API(LibCZIApiErrorCode) libCZI_CziDocumentInfoGetAvailableDimension(CziDocumentInfoHandle czi_document_info, std::uint32_t available_dimensions_count, std::uint32_t* available_dimensions);
+        // with
+        // EXTERNALLIBCZIAPI_API(LibCZIApiErrorCode) libCZI_CziDocumentInfoGetDimensionInfo(CziDocumentInfoHandle czi_document_info, std::uint32_t dimension_index, void** dimension_info_json);
         throw new UnsupportedOperationException("Not implemented yet.");
     }
     
