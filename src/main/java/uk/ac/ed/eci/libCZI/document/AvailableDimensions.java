@@ -16,6 +16,10 @@ public class AvailableDimensions {
         return Arrays.toString(availableDimensions);
     }
 
+    public int[] toArray() {
+        return availableDimensions.clone();
+    }
+
     public static AvailableDimensions fromSegment(MemorySegment availableDimensions) {
         return null;
     }
