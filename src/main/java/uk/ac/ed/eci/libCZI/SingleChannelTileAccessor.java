@@ -77,25 +77,30 @@ public class SingleChannelTileAccessor implements AutoCloseable {
         }
     }
 
+    // todo builder
     public Bitmap getBitmap(Roi roi, float zoom) {
-        return getBitmapRaw(roi.toIntRect(), zoom, 0);
+        return getBitmapRaw(roi.toIntRect(), zoom, 0, 1, 1, 1);
     }
 
-    public Bitmap getBitmap(Roi roi, float zoom, int channel) {
-        return getBitmapRaw(roi.toIntRect(), zoom, channel);
+    public Bitmap getBitmap(Roi roi, float zoom, float backgroundColorR, float backgoundColorG, float backgroundColorB) {
+        return getBitmapRaw(roi.toIntRect(), zoom, 0, backgroundColorR, backgoundColorG, backgroundColorB);
     }
 
-    public Bitmap getBitmapRaw(IntRect rawRoi, float zoom) {
-        return getBitmapRaw(rawRoi, zoom, 0);
+    public Bitmap getBitmap(Roi roi, float zoom, int channel, float backgroundColorR, float backgoundColorG, float backgroundColorB) {
+        return getBitmapRaw(roi.toIntRect(), zoom, channel, backgroundColorR, backgoundColorG, backgroundColorB);
     }
 
-    public Bitmap getBitmapRaw(IntRect rawRoi, float zoom, int channel) {
+    public Bitmap getBitmapRaw(IntRect rawRoi, float zoom, float backgroundColorR, float backgoundColorG, float backgroundColorB) {
+        return getBitmapRaw(rawRoi, zoom, 0, backgroundColorR, backgoundColorG, backgroundColorB);
+    }
+
+    public Bitmap getBitmapRaw(IntRect rawRoi, float zoom, int channel, float backgroundColorR, float backgoundColorG, float backgroundColorB) {
         FunctionDescriptor descriptor = FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS, ADDRESS, JAVA_FLOAT, ADDRESS, ADDRESS);
         MethodHandle getBitmap = LibCziFFM.getMethodHandle("libCZI_SingleChannelTileAccessorGet", descriptor);
         try (Arena arena = Arena.ofConfined()) {
             MemorySegment pCoordinate = Coordinate.createC0(channel).toMemorySegment(arena);
             MemorySegment pRoi = rawRoi.toMemorySegment(arena);
-            MemorySegment pOptions = new AccessorOptions(1,1,1, false, true, null).toMemorySegment(arena);            
+            MemorySegment pOptions = new AccessorOptions(backgroundColorR,backgoundColorG,backgroundColorB, false, true, null).toMemorySegment(arena);
             MemorySegment pBitmap = arena.allocate(ADDRESS);
             int errorCode = (int) getBitmap.invokeExact(accessorHandle, pCoordinate, pRoi, zoom, pOptions, pBitmap);
             if (errorCode != 0) {
