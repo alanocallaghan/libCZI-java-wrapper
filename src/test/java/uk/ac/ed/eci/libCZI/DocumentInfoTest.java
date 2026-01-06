@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import uk.ac.ed.eci.libCZI.document.DocumentInfo;
 import uk.ac.ed.eci.libCZI.document.GeneralDocumentInfo;
 import uk.ac.ed.eci.libCZI.document.ScalingInfo;
+import uk.ac.ed.eci.libCZI.document.AvailableDimensions;
+
 
 public class DocumentInfoTest {
     private static final Path TEST_IMAGE_PATH = Paths.get("test-images", "test-image.czi");
@@ -72,5 +74,13 @@ public class DocumentInfoTest {
         assertTrue(scalingInfo.scaleY().isPresent(), "Scale Y should be present.");
         assertEquals(3.45915e-07, scalingInfo.scaleY().get(), 1e-12);
         assertFalse(scalingInfo.scaleZ().isPresent(), "Scale Z should not be present (NaN).");
+    }
+
+    @Test
+    public void testAvailableDimensions() {
+        DocumentInfo documentInfo = reader.metadata().documentInfo();
+        AvailableDimensions availableDimensions = documentInfo.availableDimensions();
+        assertNotNull(availableDimensions, "Dimension info should not be null.");
+        assertEquals(availableDimensions.toArray()[0], 2, 1e-12);
     }
 }

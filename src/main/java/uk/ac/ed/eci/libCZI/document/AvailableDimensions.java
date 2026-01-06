@@ -3,24 +3,27 @@ package uk.ac.ed.eci.libCZI.document;
 import java.lang.foreign.MemorySegment;
 import java.util.Arrays;
 
+
+import static java.lang.foreign.ValueLayout.JAVA_INT;
+
 public class AvailableDimensions {
 
-    private final int[] availableDimensions;
+    private final int[] availableDimensionArray;
 
-    public AvailableDimensions(int[] out) {
-        this.availableDimensions=out;
+    private AvailableDimensions(int[] array) {
+        this.availableDimensionArray = array;
     }
 
     @Override
     public String toString() {
-        return Arrays.toString(availableDimensions);
+        return Arrays.toString(availableDimensionArray);
     }
 
     public int[] toArray() {
-        return availableDimensions.clone();
+        return availableDimensionArray.clone();
     }
 
-    public static AvailableDimensions fromSegment(MemorySegment availableDimensions) {
-        return null;
+    public static AvailableDimensions createFromMemorySegment(MemorySegment segment) {;
+        return new AvailableDimensions(segment.toArray(JAVA_INT));
     }
 }
