@@ -8,6 +8,7 @@ import java.lang.foreign.FunctionDescriptor;
 import java.lang.foreign.MemorySegment;
 import java.lang.invoke.MethodHandle;
 
+import java.nio.charset.StandardCharsets;
 import uk.ac.ed.eci.libCZI.LibCziFFM;
 
 public class DocumentInfo {
@@ -70,10 +71,32 @@ public class DocumentInfo {
         throw new UnsupportedOperationException("Not implemented yet.");
     }
     //libCZI_CziDocumentInfoGetDimensionInfo
-    public DimensionInfo dimensionInfo() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+    public DimensionInfo dimensionInfo(int dimension) {
+        FunctionDescriptor descriptor = FunctionDescriptor.of(JAVA_INT, ADDRESS, JAVA_INT, ADDRESS);
+        MethodHandle getAvailableDimension = LibCziFFM.getMethodHandle("libCZI_CziDocumentInfoGetDimensionInfo", descriptor);
+        try (Arena arena = Arena.ofConfined()) {
+            MemorySegment dataPP = arena.allocate(ADDRESS);
+            int errorCode = (int) getAvailableDimension.invokeExact(cziDocumentHandle, dimension, dataPP);
+            if (errorCode != 0) {
+                throw new RuntimeException("Failed to get dimension info. Error code: " + errorCode);
+            }
+            MemorySegment dataP = dataPP.get(ADDRESS, 0);
+            MemorySegment stringSeg = dataP.reinterpret(20000, arena,
+                    segment -> {
+                        try {
+                            LibCziFFM.free(segment);
+                        } catch (Throwable e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
+            String s = stringSeg.getString(0, StandardCharsets.UTF_8);
+            return new DimensionInfo(s);
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to call native function libCZI_CziDocumentInfoGetAvailableDimension", e);
+        }
     }
-    
+
+
     private MemorySegment getCziDocumentHandle(MemorySegment handle) {
         FunctionDescriptor descriptor = FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS);
         MethodHandle getDocumentInfo = LibCziFFM.getMethodHandle("libCZI_MetadataSegmentGetCziDocumentInfo", descriptor);
