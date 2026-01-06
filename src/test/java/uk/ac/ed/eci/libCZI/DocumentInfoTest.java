@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import uk.ac.ed.eci.libCZI.document.DocumentInfo;
+import uk.ac.ed.eci.libCZI.document.DimensionInfo;
 import uk.ac.ed.eci.libCZI.document.GeneralDocumentInfo;
 import uk.ac.ed.eci.libCZI.document.ScalingInfo;
 import uk.ac.ed.eci.libCZI.document.AvailableDimensions;
@@ -82,5 +83,14 @@ public class DocumentInfoTest {
         AvailableDimensions availableDimensions = documentInfo.availableDimensions();
         assertNotNull(availableDimensions, "Dimension info should not be null.");
         assertEquals(availableDimensions.toArray()[0], 2, 1e-12);
+    }
+
+    @Test
+    public void testDimensionInfo() {
+        DocumentInfo documentInfo = reader.metadata().documentInfo();
+        DimensionInfo dimensionInfo = documentInfo.dimensionInfo(2);
+        assertNotNull(dimensionInfo, "Dimension info should not be null.");
+        String string = dimensionInfo.getJSONString();
+        assertTrue(!string.isEmpty(), "JSON string should not be empty.");
     }
 }

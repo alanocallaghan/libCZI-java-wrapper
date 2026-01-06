@@ -12,6 +12,7 @@ import java.lang.invoke.MethodHandle;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Consumer;
 
+import java.nio.charset.StandardCharsets;
 import uk.ac.ed.eci.libCZI.LibCziFFM;
 
 public class DocumentInfo {
@@ -102,22 +103,21 @@ public class DocumentInfo {
             }
             MemorySegment ptr = outPtr.get(ADDRESS, 0);
             // todo sensible byte size somehow
-            MemorySegment mptr = ptr.reinterpret(20000, arena, memorySegment -> {
-                Consumer<MemorySegment> cleanup = s -> {
+            MemorySegment mptr = ptr.reinterpret(20000, arena, s -> {
                     try {
-                        LibCziFFM.free(ptr);
+                        LibCziFFM.free(s);
                     } catch (Throwable e) {
                         throw new RuntimeException(e);
                     }
-                };
-            });
+                });
             String s = mptr.getString(0, StandardCharsets.UTF_8);
             return new DimensionInfo(s);
         } catch (Throwable e) {
             throw new RuntimeException("Failed to call native function libCZI_CziDocumentInfoGetAvailableDimension", e);
         }
     }
-    
+
+
     private MemorySegment getCziDocumentHandle(MemorySegment handle) {
         FunctionDescriptor descriptor = FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS);
         MethodHandle getDocumentInfo = LibCziFFM.getMethodHandle("libCZI_MetadataSegmentGetCziDocumentInfo", descriptor);
