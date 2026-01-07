@@ -1,48 +1,72 @@
 package uk.ac.ed.eci.libCZI;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+
+
+import static uk.ac.ed.eci.libCZI.NativeUtils.Architecture.AARCH64;
+import static uk.ac.ed.eci.libCZI.NativeUtils.Architecture.X86_64;
+import static uk.ac.ed.eci.libCZI.NativeUtils.OS.FREEBSD;
+import static uk.ac.ed.eci.libCZI.NativeUtils.OS.LINUX;
+import static uk.ac.ed.eci.libCZI.NativeUtils.OS.MACOS;
+import static uk.ac.ed.eci.libCZI.NativeUtils.OS.WINDOWS;
+
 
 public class NativeUtils {
 
     private static final String RESOURCE_PREFIX = getPrefix();
 
-    private static String getPrefix() {
-        return getOS() + "-" + getArch();
+    enum OS {
+        LINUX,
+        FREEBSD,
+        WINDOWS,
+        MACOS
     }
 
-    private static String getOS() {
+    enum Architecture {
+        AARCH64("aarch64"),
+        X86_64("x86-64");
+        private String string;
+
+        Architecture(String string) {
+            this.string = string;
+        }
+        @Override
+        public String toString() {
+            return string;
+        }
+    }
+
+    private static String getPrefix() {
+        return getOS().toString().toLowerCase() + "-" + getArch().toString();
+    }
+
+    private static OS getOS() {
         var name = System.getProperty("os.name").toLowerCase();
         if (name.contains("linux"))
-            return "linux";
+            return LINUX;
         if (name.contains("windows"))
-            return "windows";
+            return WINDOWS;
         if (name.contains("darwin") || name.contains("macos"))
-            return "darwin";
-        throw new IllegalStateException("Unexpected value: " + System.getProperty("os.name").toLowerCase());
+            return MACOS;
+        throw new IllegalStateException("Unexpected value: " + name);
     }
 
-    private static String getArch() {
+    private static Architecture getArch() {
         return switch (System.getProperty("os.arch")) {
-            case "aarch64" -> "aarch64";
-            case "amd64" -> "x86-64";
+            case "aarch64" -> AARCH64;
+            case "amd64" -> X86_64;
             default -> throw new IllegalStateException("Unexpected value: " + System.getProperty("os.arch"));
         };
     }
 
     public static void loadLibraryFromJar(String libraryFileName) throws IOException {
-        // Prepend "native/" to the library file name as it is located in the "native" folder
-        String fullLibraryFileName = "native/" + libraryFileName;
-
-        var loader = Thread.currentThread().getContextClassLoader();
+//        var loader = Thread.currentThread().getContextClassLoader();
+        var loader = NativeUtils.class.getClassLoader();
         String libname = mapSharedLibraryName(libraryFileName);
         String resourcePath = RESOURCE_PREFIX + "/" + libname;
         if (resourcePath.startsWith("/")) {
@@ -55,32 +79,15 @@ public class NativeUtils {
         tempLib.deleteOnExit(); // Delete the file when JVM exits (optional, for cleanup)
         try (InputStream in = loader.getResourceAsStream(resourcePath)) {
             if (in == null) {
-                throw new IOException("Library not found in JAR: " + fullLibraryFileName);
+                throw new IOException("Library not found in JAR: " + libname);
             }
             Files.copy(in, tempLib.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
-
         System.load(tempLib.getAbsolutePath());
     }
 
-    private static boolean isMac() {
-        return NativeUtils.getOS().equals("darwin");
-    }
-
-    private static boolean isLinux() {
-        return NativeUtils.getOS().equals("linux");
-    }
-
-    private static boolean isFreeBSD() {
-        return false;
-    }
-
-    private static boolean isWindows() {
-        return NativeUtils.getOS().equals("windows");
-    }
-
     static String mapSharedLibraryName(String libName) {
-        if (isMac()) {
+        if (getOS() == MACOS) {
             if (libName.startsWith("lib")
                     && (libName.endsWith(".dylib")
                     || libName.endsWith(".jnilib"))) {
@@ -95,34 +102,7 @@ public class NativeUtils {
             }
             return name;
         }
-        else if (isLinux() || isFreeBSD()) {
-            if (isVersionedName(libName) || libName.endsWith(".so")) {
-                // A specific version was requested - use as is for search
-                return libName;
-            }
-        }
-        else if (isWindows()) {
-            if (libName.endsWith(".drv") || libName.endsWith(".dll") || libName.endsWith(".ocx")) {
-                return libName;
-            }
-        }
         return System.mapLibraryName(libName);
-    }
-
-    private static boolean isVersionedName(String name) {
-        if (name.startsWith("lib")) {
-            int so = name.lastIndexOf(".so.");
-            if (so != -1 && so + 4 < name.length()) {
-                for (int i=so+4;i < name.length();i++) {
-                    char ch = name.charAt(i);
-                    if (!Character.isDigit(ch) && ch != '.') {
-                        return false;
-                    }
-                }
-                return true;
-            }
-        }
-        return false;
     }
 
 }

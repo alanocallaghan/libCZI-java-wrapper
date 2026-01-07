@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     implementation(files("../libczi-jars/libczi-linux-x86-64/libCZI-linux-x86-64.jar"))
-    implementation(files("../libczi-jars/libczi-darwin-aarch64/libCZI-macos-aarch64.jar"))
+    implementation(files("../libczi-jars/libczi-macos-aarch64/libCZI-macos-aarch64.jar"))
     implementation(files("../libczi-jars/libczi-windows-x86-64/libCZI-windows-x86-64.jar"))
 
     api("com.fasterxml.jackson.core:jackson-databind:2.19.2")
