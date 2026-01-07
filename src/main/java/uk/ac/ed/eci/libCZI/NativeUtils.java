@@ -72,10 +72,9 @@ public class NativeUtils {
         if (resourcePath.startsWith("/")) {
             resourcePath = resourcePath.substring(1);
         }
-
         // Prepare a destination file
         Path tempDir = Files.createTempDirectory("native-libs");
-        File tempLib = tempDir.resolve(libraryFileName).toFile();
+        File tempLib = tempDir.resolve(libname).toFile();
         tempLib.deleteOnExit(); // Delete the file when JVM exits (optional, for cleanup)
         try (InputStream in = loader.getResourceAsStream(resourcePath)) {
             if (in == null) {
