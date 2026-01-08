@@ -18,6 +18,7 @@ import uk.ac.ed.eci.libCZI.LibCziFFM;
 public class DocumentInfo {
     private final MemorySegment cziDocumentHandle;
     private final Arena classArena;
+    private MemorySegment displaySettingsHandle;
 
     public DocumentInfo(MemorySegment readerHandle) {
         this.classArena = Arena.ofConfined();
@@ -27,6 +28,7 @@ public class DocumentInfo {
     public void close() throws Exception {
         releaseDocumentInfo();
         this.classArena.close();
+        LibCziFFM.free(displaySettingsHandle);
     }
     
     //libCZI_CziDocumentInfoGetGeneralDocumentInfo
@@ -84,7 +86,19 @@ public class DocumentInfo {
 
     //libCZI_CziDocumentInfoGetDisplaySettings
     public DisplaySettings displaySettings() {
-        throw new UnsupportedOperationException("Not implemented yet.");
+        FunctionDescriptor descriptor = FunctionDescriptor.of(JAVA_INT, ADDRESS, ADDRESS);
+        MethodHandle getDisplaySettings = LibCziFFM.getMethodHandle("libCZI_CziDocumentInfoGetDisplaySettings", descriptor);
+        try {
+            displaySettingsHandle = classArena.allocate(ADDRESS);
+            int errorCode = (int) getDisplaySettings.invokeExact(cziDocumentHandle, displaySettingsHandle);
+            if (errorCode != 0) {
+                throw new RuntimeException("Failed to get display settings. Error code: " + errorCode);
+            }
+            return new DisplaySettings(displaySettingsHandle.get(ADDRESS, 0).asReadOnly());
+        } catch (Throwable e) {
+            throw new RuntimeException("Failed to call native function libCZI_CziDocumentInfoGetDisplaySettings", e);
+        }
+
     }
 
 
