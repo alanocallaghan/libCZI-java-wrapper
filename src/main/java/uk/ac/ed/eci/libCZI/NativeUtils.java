@@ -51,7 +51,7 @@ public class NativeUtils {
             return LINUX;
         if (name.contains("windows"))
             return WINDOWS;
-        if (name.contains("darwin") || name.contains("macos"))
+        if (name.contains("darwin") || name.contains("mac"))
             return MACOS;
         throw new IllegalStateException("Unexpected value: " + name);
     }
