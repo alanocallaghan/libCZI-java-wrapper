@@ -27,13 +27,23 @@ public record DimBounds(int dimensionsValid, int[] start, int[] size) {
     }
 
     public static DimBounds createFromMemorySegment(MemorySegment segment) {
-            int dimensionsValid = segment.get(JAVA_INT,
-                    layout().byteOffset(PathElement.groupElement("dimensions_valid")));
-            int[] start = segment.asSlice(layout().byteOffset(PathElement.groupElement("start")))
-                    .toArray(JAVA_INT);
-            int[] size = segment.asSlice(layout().byteOffset(PathElement.groupElement("size")))
-                    .toArray(JAVA_INT);
+        MemoryLayout layout = layout();
+        int dimensionsValid = segment.get(
+                JAVA_INT,
+                layout.byteOffset(PathElement.groupElement("dimensions_valid"))
+        );
 
-            return new DimBounds(dimensionsValid, start, size);        
+        int[] start = segment
+                .asSlice(
+                        layout.byteOffset(PathElement.groupElement("start")),
+                        layout.select(PathElement.groupElement("start")).byteSize())
+                .toArray(JAVA_INT);
+
+        int[] size = segment
+                .asSlice(layout.byteOffset(PathElement.groupElement("size")),
+                        layout.select(PathElement.groupElement("size")).byteSize())
+                .toArray(JAVA_INT);
+
+        return new DimBounds(dimensionsValid, start, size);
     }
 }
