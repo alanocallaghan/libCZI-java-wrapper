@@ -14,6 +14,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import uk.ac.ed.eci.libCZI.document.DocumentInfo;
 import uk.ac.ed.eci.libCZI.metadata.Metadata;
 
 public class CziStreamReaderTest {
@@ -135,5 +136,15 @@ public class CziStreamReaderTest {
     public void testMetadataSegment() {
         Metadata metadata = reader.metadata();
         assertNotNull(metadata, "Metadata should not be null.");
+    }
+
+    @Test
+    public void testDimensionBounds() {
+        SubBlockStatistics subBlockStatistics = reader.simpleReaderStatistics();
+        DimBounds dimBounds = subBlockStatistics.dimBounds();
+        assertNotNull(dimBounds, "DimBounds should not be null.");
+        assertEquals(18, dimBounds.dimensionsValid());
+        assertEquals(LibCziFFM.K_MAX_DIMENSION_COUNT, dimBounds.size().length, "DimBounds size should be K_MAX_DIMENSION_COUNT.");
+        assertEquals(LibCziFFM.K_MAX_DIMENSION_COUNT, dimBounds.start().length, "DimBounds size should be K_MAX_DIMENSION_COUNT.");
     }
 }
